@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/gcc-arm-none-eabi.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..)",
+      "Bash(rm -rf build)",
+      "Bash(cmake -B build --preset Debug)",
+      "Bash(cmake -version)",
+      "Bash(cmake --build . --verbose)",
+      "Bash(cmake -B build -S .)",
+      "Bash(cmake --build build --verbose)",
+      "Bash(cmake --build build)"
+    ]
+  }
+}

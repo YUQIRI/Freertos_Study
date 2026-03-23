@@ -1,0 +1,79 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Tool Versions:</h2>
+IDE-Version: ¦ÌVision V5.29.0.0
+Copyright (C) 2019 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: nana yuqiri, nana, LIC=CZLZX-H8HQ1-740S0-BP4QG-NK0D9-8ZBGC
+ 
+Tool Versions:
+Toolchain:       MDK-ARM Plus  Version: 5.29.0.0
+Toolchain Path:  E:\Program Files (x86)\Keil\ARM\ARMCC\Bin
+C Compiler:      Armcc.exe V5.06 update 6 (build 750)
+Assembler:       Armasm.exe V5.06 update 6 (build 750)
+Linker/Locator:  ArmLink.exe V5.06 update 6 (build 750)
+Library Manager: ArmAr.exe V5.06 update 6 (build 750)
+Hex Converter:   FromElf.exe V5.06 update 6 (build 750)
+CPU DLL:         SARMCM3.DLL V5.29.0.0
+Dialog DLL:      DCM.DLL V1.17.3.0
+Target DLL:      STLink\ST-LINKIII-KEIL_SWO.dll V3.0.7.0
+Dialog DLL:      TCM.DLL V1.36.5.0
+ 
+<h2>Project:</h2>
+E:\YUQIRI\STM32_Freertos\13_queue_game\MDK-ARM\01_freertos_template.uvprojx
+Project File Date:  03/22/2026
+
+<h2>Output:</h2>
+*** Using Compiler 'V5.06 update 6 (build 750)', folder: 'E:\Program Files (x86)\Keil\ARM\ARMCC\Bin'
+Build target '01_freertos_template'
+compiling freertos.c...
+../Drivers/DshanMCU-F103/driver_bluetooth.h(16): warning:  #1-D: last line of file ends without a newline
+  #endif
+../Core/Src/freertos.c(87): warning:  #177-D: variable "SoundStaticTask"  was declared but never referenced
+  static TaskHandle_t  SoundStaticTask ;
+../Core/Src/freertos.c(89): warning:  #550-D: variable "reg"  was set but never used
+  static UBaseType_t reg;
+../Core/Src/freertos.c(92): warning:  #177-D: variable "g_pucStackOfLightTask"  was declared but never referenced
+  static StackType_t g_pucStackOfLightTask[128];
+../Core/Src/freertos.c(93): warning:  #177-D: variable "g_TCBofLightTask"  was declared but never referenced
+  static StaticTask_t g_TCBofLightTask;
+../Core/Src/freertos.c(94): warning:  #177-D: variable "xLightTaskHandle"  was declared but never referenced
+  static TaskHandle_t xLightTaskHandle;
+../Core/Src/freertos.c(96): warning:  #177-D: variable "g_pucStackOfColorTask"  was declared but never referenced
+  static StackType_t g_pucStackOfColorTask[128];
+../Core/Src/freertos.c(97): warning:  #177-D: variable "g_TCBofColorTask"  was declared but never referenced
+  static StaticTask_t g_TCBofColorTask;
+../Core/Src/freertos.c(98): warning:  #177-D: variable "xColorTaskHandle"  was declared but never referenced
+  static TaskHandle_t xColorTaskHandle;
+../Core/Src/freertos.c: 9 warnings, 0 errors
+linking...
+Program Size: Code=20620 RO-data=2880 RW-data=244 ZI-data=10260  
+FromELF: creating hex file...
+"01_freertos_template\01_freertos_template.axf" - 0 Error(s), 9 Warning(s).
+
+<h2>Software Packages used:</h2>
+
+Package Vendor: ARM
+                http://www.keil.com/pack/ARM.CMSIS.5.6.0.pack
+                ARM.CMSIS.5.6.0
+                CMSIS (Cortex Microcontroller Software Interface Standard)
+   * Component: CORE Version: 5.3.0
+
+Package Vendor: Keil
+                http://www.keil.com/pack/Keil.STM32F1xx_DFP.2.2.0.pack
+                Keil.STM32F1xx_DFP.2.2.0
+                STMicroelectronics STM32F1 Series Device Support, Drivers and Examples
+
+<h2>Collection of Component include folders:</h2>
+  .\RTE\_01_freertos_template
+  E:\Program Files (x86)\Keil\ARM\PACK\ARM\CMSIS\5.6.0\CMSIS\Core\Include
+  E:\Program Files (x86)\Keil\ARM\PACK\Keil\STM32F1xx_DFP\2.2.0\Device\Include
+
+<h2>Collection of Component Files used:</h2>
+
+   * Component: ARM::CMSIS:CORE:5.3.0
+Build Time Elapsed:  00:00:02
+</pre>
+</body>
+</html>
