@@ -135,6 +135,7 @@ static void platform_task(void *params)
             platformX = platformXtmp;
             
 		}
+		vTaskDelay(50);
     }
 }
 

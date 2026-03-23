@@ -86,7 +86,7 @@
 /* USER CODE BEGIN Variables */
 static TaskHandle_t  SoundStaticTask ;
 static TaskHandle_t  SoundInsideTask = NULL;
-static UBaseType_t reg;
+//static UBaseType_t reg;
 
 
 static StackType_t g_pucStackOfLightTask[128];
@@ -132,23 +132,22 @@ void SoundTask(void *argument)
   PassiveBuzzer_Init();
   uint8_t Running = 1;
  //
+  g_xQueueMusic = xQueueCreate(10, sizeof(struct music_data));
+    
+  struct music_data bdata;
+//  struct input_data bdata;
+   uint8_t  b_data, b_last_data;
 
-  struct input_data bdata;
 // HAL_UART_Receive_IT(&huart1, &rxData, 1);
 //  LCD_Clear();
 //  LCD_PrintString(6, 0, "Ready");
-   uint8_t  b_data, b_last_data;
+
   while(1)
   {
-  
-  		if (pdPASS == xQueueReceive(g_xQueueMusic, &bdata, 10))
+
+  		if (pdPASS == xQueueReceive(g_xQueueMusic, &bdata, portMAX_DELAY))
 		{
-		  b_data = bdata.val;
-            if (b_data == 0x00)
-            {
-                b_data = b_last_data;
-            }
-            
+		  b_data = bdata.val;         
             if (b_data == 0x01) /* 暂停/启动 */
             {
 				b_data = 0x00;
@@ -158,18 +157,18 @@ void SoundTask(void *argument)
 				  {
 					/* 创建任务 */
 
-			//        LCD_Clear();
-			//        LCD_PrintString(0, 0, "Creat Task");
+//			        LCD_Clear();
+//			        LCD_PrintString(0, 0, "Creat Task");
 
-					reg = xTaskCreate(MusicTask, "BadApple", 128, NULL, osPriorityNormal + 1 , &SoundInsideTask);
+						xTaskCreate(MusicTask, "BadApple", 128, NULL, osPriorityNormal + 1 , &SoundInsideTask);
 					
 					  }
 				  else 
 				  {
 						if(Running)
 						{
-				//          LCD_Clear();
-				//          LCD_PrintString(0, 0, "Suspend Task");
+//				          LCD_Clear();
+//				          LCD_PrintString(0, 0, "Suspend Task");
 
 						  vTaskSuspend(SoundInsideTask);
 						  PassiveBuzzer_Control(0);
@@ -201,7 +200,7 @@ void SoundTask(void *argument)
 			vTaskDelay(50);
             }
 			}
-            b_last_data = b_data;
+            
 
 //    /* 启动/暂停 信号 */
 //    if(0x01 == rxMusicData)
@@ -238,7 +237,7 @@ void MX_FREERTOS_Init(void) {
   LCD_Clear();
   
   
-  IRReceiver_Init();
+  BTReceiver_Init();
   LCD_PrintString(0, 0, "Starting");
 
   /* USER CODE END Init */
@@ -269,9 +268,10 @@ void MX_FREERTOS_Init(void) {
   /* 创建任务: 声 */
 //  extern void PlayMusic(void *params);
 //  xTaskCreate(PlayMusic, "MusicTask", 128, NULL, osPriorityNormal, NULL);
-  xTaskCreate(game1_task, "GameTask", 128, NULL, osPriorityNormal, NULL);
-  //reg = xTaskCreate(SoundTask, "Sound", 128, NULL, osPriorityNormal , &SoundStaticTask);
+  xTaskCreate(SoundTask, "Sound", 128, NULL, osPriorityNormal , &SoundStaticTask);
   
+  xTaskCreate(game1_task, "GameTask", 128, NULL, osPriorityNormal, NULL);
+
   /* 创建任务: 光 */
   //xLightTaskHandle = xTaskCreateStatic(Led_Test, "LightTask", 128, NULL, osPriorityNormal, g_pucStackOfLightTask, &g_TCBofLightTask);
 

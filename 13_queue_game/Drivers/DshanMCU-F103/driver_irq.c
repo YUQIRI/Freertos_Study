@@ -14,7 +14,7 @@
 #include "stm32f1xx_hal.h"
 #include "tim.h"
 
-extern void IRReceiver_IRQ_Callback(void);
+extern void BTReceiver_IRQ_Callback(void);
 extern void RotaryEncoder_IRQ_Callback(void);
 
 /**********************************************************************
@@ -31,11 +31,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
     switch (GPIO_Pin)
     {
-//        case GPIO_PIN_10:
-//        {
-//            //IRReceiver_IRQ_Callback();
-//            break;
-//        }
+        case GPIO_PIN_10:
+        {
+            BTReceiver_IRQ_Callback();
+            break;
+        }
 
         case GPIO_PIN_12:
         {

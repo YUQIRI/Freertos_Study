@@ -3,14 +3,15 @@
 
 #include <stdint.h>
 
-void IRReceiver_Init(void);
+void BTReceiver_Init(void);
 
-int IRReceiver_Read(uint8_t *pDev, uint8_t *pData);
+int BTReceiver_Read(uint8_t *pDev, uint8_t *pData);
 
-const char *IRReceiver_CodeToString(uint8_t code);
 
 void BT_UART_RxCpltCallback(uint8_t ch);
 
-void IRReceiver_Test(void);
+const char *BTReceiver_CodeToString(uint8_t code);
+
+void BTReceiver_Test(void);
 
 #endif

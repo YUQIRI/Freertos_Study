@@ -21,36 +21,26 @@ Target DLL:      STLink\ST-LINKIII-KEIL_SWO.dll V3.0.7.0
 Dialog DLL:      TCM.DLL V1.36.5.0
  
 <h2>Project:</h2>
-E:\YUQIRI\STM32_Freertos\13_queue_game\MDK-ARM\01_freertos_template.uvprojx
+E:\YUQIRI\STM32_Freertos1\Freertos_Study\13_queue_game\MDK-ARM\01_freertos_template.uvprojx
 Project File Date:  03/22/2026
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 6 (build 750)', folder: 'E:\Program Files (x86)\Keil\ARM\ARMCC\Bin'
 Build target '01_freertos_template'
-compiling freertos.c...
-../Drivers/DshanMCU-F103/driver_bluetooth.h(16): warning:  #1-D: last line of file ends without a newline
+compiling HC05.c...
+driver_bluetooth.h(11): warning:  #1-D: last line of file ends without a newline
   #endif
-../Core/Src/freertos.c(87): warning:  #177-D: variable "SoundStaticTask"  was declared but never referenced
-  static TaskHandle_t  SoundStaticTask ;
-../Core/Src/freertos.c(89): warning:  #550-D: variable "reg"  was set but never used
-  static UBaseType_t reg;
-../Core/Src/freertos.c(92): warning:  #177-D: variable "g_pucStackOfLightTask"  was declared but never referenced
-  static StackType_t g_pucStackOfLightTask[128];
-../Core/Src/freertos.c(93): warning:  #177-D: variable "g_TCBofLightTask"  was declared but never referenced
-  static StaticTask_t g_TCBofLightTask;
-../Core/Src/freertos.c(94): warning:  #177-D: variable "xLightTaskHandle"  was declared but never referenced
-  static TaskHandle_t xLightTaskHandle;
-../Core/Src/freertos.c(96): warning:  #177-D: variable "g_pucStackOfColorTask"  was declared but never referenced
-  static StackType_t g_pucStackOfColorTask[128];
-../Core/Src/freertos.c(97): warning:  #177-D: variable "g_TCBofColorTask"  was declared but never referenced
-  static StaticTask_t g_TCBofColorTask;
-../Core/Src/freertos.c(98): warning:  #177-D: variable "xColorTaskHandle"  was declared but never referenced
-  static TaskHandle_t xColorTaskHandle;
-../Core/Src/freertos.c: 9 warnings, 0 errors
+HC05.c(213): warning:  #177-D: variable "xHigherPriorityTaskWoken"  was declared but never referenced
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;       
+HC05.c(345): warning:  #1-D: last line of file ends without a newline
+  }
+HC05.c(32): warning:  #177-D: variable "g_BT_RxData"  was declared but never referenced
+  static uint8_t g_BT_RxData;
+HC05.c: 4 warnings, 0 errors
 linking...
-Program Size: Code=20620 RO-data=2880 RW-data=244 ZI-data=10260  
+Program Size: Code=23044 RO-data=5388 RW-data=272 ZI-data=10800  
 FromELF: creating hex file...
-"01_freertos_template\01_freertos_template.axf" - 0 Error(s), 9 Warning(s).
+"01_freertos_template\01_freertos_template.axf" - 0 Error(s), 4 Warning(s).
 
 <h2>Software Packages used:</h2>
 
