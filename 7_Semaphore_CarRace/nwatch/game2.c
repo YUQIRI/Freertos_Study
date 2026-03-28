@@ -22,6 +22,7 @@
 #include "driver_mpu6050.h"
 
 #include <string.h>
+#include <sys/_intsup.h>
 
 #define NOINVERT	false
 #define INVERT		true
@@ -29,417 +30,110 @@
 #define sprintf_P  sprintf
 #define PSTR(a)  a
 
-#define PLATFORM_WIDTH	12
-#define PLATFORM_HEIGHT	4
+#define CAR_MOVE_NONE 0
+#define CAR1MOVE	1
+#define CAR2MOVE	2
+#define CAR3MOVE	3
 
-#define UPT_MOVE_NONE	0
-#define UPT_MOVE_RIGHT	1
-#define UPT_MOVE_LEFT	2
+#define CARLENTH 15
+#define CARHEIGHT 16
+#define CARSPEED 6
 
-#define BLOCK_COLS		32
-#define BLOCK_ROWS		5
-#define BLOCK_COUNT		(BLOCK_COLS * BLOCK_ROWS)
-
-
-typedef struct{
-	float x;
-	float y;
-	float velX;
-	float velY;
-}s_ball;
-
-static const byte line[] ={
-	0x07,0x07,0x07,
+static const byte roadMarking[] ={
+	0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01,
 };
 
-static const byte car[] ={
-	0x60,0x70,0x50,0x10,0x30,0xF0,0xF0,0x30,0x10,0x50,0x70,0x60,
+static const byte carImg[] ={
+	0x40,0xF8,0xEC,0x2C,0x2C,0x38,0xF0,0x10,0xD0,0x30,0xE8,0x4C,0x4C,0x9C,0xF0,
+	0x02,0x1F,0x37,0x34,0x34,0x1C,0x0F,0x08,0x0B,0x0C,0x17,0x32,0x32,0x39,0x0F,
 };
 
-static const byte clearImg[] ={
-	0,0,0,0,0,0,0,0,0,0,0,0,
+static const byte clearImg[30] ={
+	0
 };
 
-static bool btnExit(void);
-static bool btnRight(void);
-static bool btnLeft(void);
-void game1_draw(void);
+struct car_data {
+	int x;
+	int y;
+	int ControlKey;
+};
 
-static byte uptMove;
-static s_ball ball;
-static bool* blocks;
-static byte lives, lives_origin;
-static uint score;
-static byte platformX;
+struct car_data g_cars[3] = {
+	{0, 0, BT_KEY_1},
+	{0, 17, BT_KEY_2},	
+	{0, 34, BT_KEY_3},
+};
+
+
 
 static uint32_t g_xres, g_yres, g_bpp;
 static uint8_t *g_framebuffer;
 
-/* 输入队列 */
-static QueueHandle_t g_xQueueRotay;
-static QueueHandle_t g_xQueueMPU6050;
-static QueueHandle_t g_xQueueBT;
-
-static QueueHandle_t g_xQueuePlatform; /* 挡球板队列 */
-static QueueHandle_t g_xQueueSetInput; /* InputTask任务 */
-
-
-static void platform_task(void *params)
+static void ShowCar(struct car_data *car)
 {
-    byte platformXtmp = platformX;    
-
-	  struct input_data idata;
-
-    // Draw platform
-    draw_bitmap(platformXtmp, g_yres - 8, platform, 12, 8, NOINVERT, 0);
-    draw_flushArea(platformXtmp, g_yres - 8, 12, 8);
-    
-    while (1)
-    {
-        /* 读取红外遥控器 */
-		//if (0 == IRReceiver_Read(&dev, &data))
-		xQueueReceive(g_xQueuePlatform, &idata, portMAX_DELAY);
-		
-		uptMove = idata.val;
-             
-            // Hide platform
-            draw_bitmap(platformXtmp, g_yres - 8, clearImg, 12, 8, NOINVERT, 0);
-            draw_flushArea(platformXtmp, g_yres - 8, 12, 8);
-            
-            // Move platform
-            if(uptMove == UPT_MOVE_RIGHT)
-                platformXtmp += 3;
-            else if(uptMove == UPT_MOVE_LEFT)
-                platformXtmp -= 3;
-            uptMove = UPT_MOVE_NONE;
-            
-            // Make sure platform stays on screen
-            if(platformXtmp > 250)
-                platformXtmp = 0;
-            else if(platformXtmp > g_xres - PLATFORM_WIDTH)
-                platformXtmp = g_xres - PLATFORM_WIDTH;
-            
-            // Draw platform
-            draw_bitmap(platformXtmp, g_yres - 8, platform, 12, 8, NOINVERT, 0);
-            draw_flushArea(platformXtmp, g_yres - 8, 12, 8);
-            
-            platformX = platformXtmp;
-            
-		
-		vTaskDelay(50);
-    }
+	draw_bitmap(car->x, car->y, carImg, 15, 16, NOINVERT, 0);
+	draw_flushArea(car->x, car->y, 15, 16);
 }
-static void ProcessBTData(void)
+static void HideCar(struct car_data *car)
 {
+	draw_bitmap(car->x, car->y, clearImg, 15, 16, NOINVERT, 0);
+	draw_flushArea(car->x, car->y, 15, 16);
+}
+static void car_task(void *params)
+{
+	struct car_data *car = params;
 	struct bt_data idata;
-	static struct input_data input;
-	
-	xQueueReceive(g_xQueueBT, &idata, 0);
+	//创建队列
+	QueueHandle_t g_xQueueCar = xQueueCreate(10, sizeof(struct bt_data));
+	//注册队列
+	RegisterQueueHandle(g_xQueueCar);
 
-	if (idata.val == BT_KEY_LEFT)
+	ShowCar(car);
+    
+	while (1)
 	{
-		input.dev = idata.dev;
-		input.val = UPT_MOVE_LEFT;
-	}
-	else if (idata.val == BT_KEY_RIGHT)
-	{
-		input.dev = idata.dev;
-		input.val = UPT_MOVE_RIGHT;
-	}
-	else if (idata.val == BT_KEY_REPEAT)
-	{
-		/* 保持不变 */;
-	}
-	else
-	{
-		input.dev = idata.dev;
-		input.val = UPT_MOVE_NONE;
-	}
-	
-	/* 写挡球板队列 */
-	xQueueSend(g_xQueuePlatform, &input, 0);
-}
-
-static void ProcessMPU6050Data(void)
-{
-	struct MPU6050_data mdata;
-	struct input_data idata;
-	
-	/* 读旋转编码器队列 */
-	xQueueReceive(g_xQueueMPU6050, &mdata, 0);
-			
-	/* 处理数据 */
-	/* 判断角度, 大于90度表示往左移动挡球板, 小于90度表示往右移动挡球板 */
-	if (mdata.angle_x > 90)
-	{
-		idata.val = UPT_MOVE_LEFT;
-	}
-	else if(mdata.angle_x < 90)
-	{
-		idata.val = UPT_MOVE_RIGHT;
-	}
-	else
-	{
-		idata.val = UPT_MOVE_NONE;
-	}
-	
-	/* 写挡球板队列 */
-	idata.dev = 2;
-	xQueueSend(g_xQueuePlatform, &idata, 0);
-}
-
-
-/* Input_Task任务 */
-static void Input_Task(void *params)
-{	
-	/* 队列集句柄 */
-		QueueSetMemberHandle_t xQueueHandle;
-	/* 读队列集接收输入队列数据 */
-	while(1)
-	{
-		xQueueHandle = xQueueSelectFromSet(g_xQueueSetInput,portMAX_DELAY);
-		/* 处理数据 */
-		if(xQueueHandle)
-		{
-			if(xQueueHandle == g_xQueueBT)
+		/* 读取汽车队列 */
+		xQueueReceive(g_xQueueCar, &idata, portMAX_DELAY);
+			 	
+			// Move cars
+			if(idata.val == car->ControlKey)
 			{
-				ProcessBTData();
+				// Hide cars
+				HideCar(car);
+				if(car->x < g_xres - CARLENTH)
+				{
+					car->x += CARSPEED;
+					if(car->x > g_xres - CARLENTH)
+						car->x = g_xres - CARLENTH;
+				}
+				// Draw cars
+				ShowCar(car);
 			}
-			if(xQueueHandle == g_xQueueMPU6050)
-			{
-				ProcessMPU6050Data();
-			}
-		}
+	
 		vTaskDelay(50);
 	}
-		
 }
 
-void game1_task(void *params)
-{		
-    uint8_t dev, data, last_data;
-    
+void car_game(void)
+{
+	int i,j;
+   
     g_framebuffer = LCD_GetFrameBuffer(&g_xres, &g_yres, &g_bpp);
     draw_init();
     draw_end();
-
-	/* 创建队列、创建队列集、创建Input_Task */
-		g_xQueuePlatform = xQueueCreate(10, sizeof(struct input_data));
-		g_xQueueSetInput = xQueueCreateSet(LenthBT + LenthMPU6050);
-		
-		g_xQueueBT = GetQueueBT();
-		g_xQueueMPU6050 = GetQueueMPU6050();
-		
-	/* 将队列加入队列集 */
-		xQueueAddToSet(g_xQueueBT, g_xQueueSetInput);
-		xQueueAddToSet(g_xQueueMPU6050, g_xQueueSetInput);
-		xTaskCreate(MPU6050_Task,"MPU6050Task", 128 , NULL, osPriorityNormal, NULL);
-		xTaskCreate(Input_Task, "InputTask", 128 , NULL, osPriorityNormal, NULL);
-    
-	uptMove = UPT_MOVE_NONE;
-
-	ball.x = g_xres / 2;
-	ball.y = g_yres - 10;
-        
-	ball.velX = -0.5;
-	ball.velY = -0.6;
-//	ball.velX = -1;
-//	ball.velY = -1.1;
-
-	blocks = pvPortMalloc(BLOCK_COUNT);
-    memset(blocks, 0, BLOCK_COUNT);
-	
-	lives = lives_origin = 3;
-	score = 0;
-	platformX = (g_xres / 2) - (PLATFORM_WIDTH / 2);
-
-    xTaskCreate(platform_task, "platform_task", 128 , NULL, osPriorityNormal, NULL);
-
-    while (1)
-    {
-        game1_draw();
-        //draw_end();
-        vTaskDelay(50);
-    }
-}
-
-static bool btnExit()
-{
-	
-	vPortFree(blocks);
-	if(lives == 255)
+	//画道路
+	for(i = 0; i < 3; i++)
 	{
-		//game1_start();
-	}
-	else
-	{
-		//pwrmgr_setState(PWR_ACTIVE_DISPLAY, PWR_STATE_NONE);	
-		//animation_start(display_load, ANIM_MOVE_OFF);
-		vTaskDelete(NULL);
-	}
-	return true;
-}
-
-static bool btnRight()
-{
-	uptMove = UPT_MOVE_RIGHT;
-	return false;
-}
-
-static bool btnLeft()
-{
-	uptMove = UPT_MOVE_LEFT;
-	return false;
-}
-
-void game1_draw()
-{
-	bool gameEnded = ((score >= BLOCK_COUNT) || (lives == 255));
-
-	byte platformXtmp = platformX;
-
-    static bool first = 1;
-
-	// Move ball
-	// hide ball
-	draw_bitmap(ball.x, ball.y, clearImg, 2, 2, NOINVERT, 0);
-    draw_flushArea(ball.x, ball.y, 2, 8);
-
-    // Draw platform
-    //draw_bitmap(platformX, g_yres - 8, platform, 12, 8, NOINVERT, 0);
-    //draw_flushArea(platformX, g_yres - 8, 12, 8);
-	
-	if(!gameEnded)
-	{
-		ball.x += ball.velX;
-		ball.y += ball.velY;
-	}
-
-	bool blockCollide = false;
-	const float ballX = ball.x;
-	const byte ballY = ball.y;
-
-	// Block collision
-	byte idx = 0;
-	LOOP(BLOCK_COLS, x)
-	{
-		LOOP(BLOCK_ROWS, y)
+		for(j = 0; j < 8; j++)
 		{
-			if(!blocks[idx] && ballX >= x * 4 && ballX < (x * 4) + 4 && ballY >= (y * 4) + 8 && ballY < (y * 4) + 8 + 4)
-			{
-//				buzzer_buzz(100, TONE_2KHZ, VOL_UI, PRIO_UI, NULL);
-				// led_flash(LED_GREEN, 50, 255); // 100ask todo
-				blocks[idx] = true;
-
-                // hide block
-                draw_bitmap(x * 4, (y * 4) + 8, clearImg, 3, 8, NOINVERT, 0);                
-                draw_flushArea(x * 4, (y * 4) + 8, 3, 8);                
-				blockCollide = true;
-				score++;
-			}
-			idx++;
+			draw_bitmap(16*j, 16+i*17, roadMarking, 8, 1, NOINVERT, 0);
+			draw_flushArea(16*j, 16+i*17, 8, 1);
 		}
 	}
-
-
-	// Side wall collision
-	if(ballX > g_xres - 2)
-	{
-		if(ballX > 240)
-			ball.x = 0;		
-		else
-			ball.x = g_xres - 2;
-		ball.velX = -ball.velX;		
-	}
-	if(ballX < 0)
-  {
-		ball.x = 0;		
-		ball.velX = -ball.velX;	
-  }
-
-	// Platform collision
-	bool platformCollision = false;
-	if(!gameEnded && ballY >= g_yres - PLATFORM_HEIGHT - 2 && ballY < 240 && ballX >= platformX && ballX <= platformX + PLATFORM_WIDTH)
-	{
-		platformCollision = true;
-		// buzzer_buzz(200, TONE_5KHZ, VOL_UI, PRIO_UI, NULL); // 100ask todo
-		ball.y = g_yres - PLATFORM_HEIGHT - 2;
-		if(ball.velY > 0)
-			ball.velY = -ball.velY;
-		ball.velX = ((float)rand() / (RAND_MAX / 2)) - 1; // -1.0 to 1.0
-	}
-
-	// Top/bottom wall collision
-	if(!gameEnded && !platformCollision && (ballY > g_yres - 2 || blockCollide))
-	{
-		if(ballY > 240)
-		{
-			// buzzer_buzz(200, TONE_2_5KHZ, VOL_UI, PRIO_UI, NULL); // 100ask todo
-			ball.y = 0;
-		}
-		else if(!blockCollide)
-		{
-			// buzzer_buzz(200, TONE_2KHZ, VOL_UI, PRIO_UI, NULL); // 100ask todo
-			ball.y = g_yres - 1;
-			lives--;
-		}
-		ball.velY *= -1;
-	}
-
-	// Draw ball
-	draw_bitmap(ball.x, ball.y, ballImg, 2, 2, NOINVERT, 0);
-    draw_flushArea(ball.x, ball.y, 2, 8);
-
-    // Draw platform
-    //draw_bitmap(platformX, g_yres - 8, platform, 12, 8, NOINVERT, 0);
-    //draw_flushArea(platformX, g_yres - 8, 12, 8);
-
-    if (first)
-    {
-        first = 0;
-        
-    	// Draw blocks
-    	idx = 0;
-    	LOOP(BLOCK_COLS, x)
-    	{
-    		LOOP(BLOCK_ROWS, y)
-    		{
-    			if(!blocks[idx])
-    			{
-    				draw_bitmap(x * 4, (y * 4) + 8, block, 3, 8, NOINVERT, 0);
-                    draw_flushArea(x * 4, (y * 4) + 8, 3, 8);                
-    			}
-    			idx++;
-    		}
-    	}
-        
-    }
-
-	// Draw score
-	char buff[6];
-	sprintf_P(buff, PSTR("%u"), score);
-	draw_string(buff, false, 0, 0);
-
-    // Draw lives
-    if(lives != 255)
-    {
-        LOOP(lives_origin, i)
-        {
-            if (i < lives)
-                draw_bitmap((g_xres - (3*8)) + (8*i), 1, livesImg, 7, 8, NOINVERT, 0);
-            else
-                draw_bitmap((g_xres - (3*8)) + (8*i), 1, clearImg, 7, 8, NOINVERT, 0);
-            draw_flushArea((g_xres - (3*8)) + (8*i), 1, 7, 8);    
-        }
-    }   
-
-	// Got all blocks
-	if(score >= BLOCK_COUNT)
-		draw_string_P(PSTR(STR_WIN), false, 50, 32);
-
-	// No lives left (255 because overflow)
-	if(lives == 255)
-		draw_string_P(PSTR(STR_GAMEOVER), false, 34, 32);
+	
+	//创建任务
+	xTaskCreate(car_task, "car1_task", 128 , &g_cars[0], osPriorityNormal + 1 , NULL);
+	xTaskCreate(car_task, "car2_task", 128 , &g_cars[1], osPriorityNormal + 1 , NULL);
+	xTaskCreate(car_task, "car3_task", 128 , &g_cars[2], osPriorityNormal + 1 , NULL);
 
 }
-

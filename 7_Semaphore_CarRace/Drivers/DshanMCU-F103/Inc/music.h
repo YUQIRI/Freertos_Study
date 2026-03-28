@@ -13,6 +13,7 @@
 #include "driver_bluetooth.h"
 #include "queue.h"
 
+
 void Buzzer_Play(uint16_t freq, uint32_t time_ms);
 void BadApple_Play(void);
 void SoundTask(void *argument);

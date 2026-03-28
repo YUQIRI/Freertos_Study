@@ -260,7 +260,7 @@ void MPU6050_Test(void)
 
 void MPU6050_Task(void *params)
 {	
-    int16_t AccX;
+
 	struct MPU6050_data result;
 	int ret;
 	extern volatile int bInUsed;

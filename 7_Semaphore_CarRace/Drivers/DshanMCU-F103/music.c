@@ -1,4 +1,5 @@
 #include "music.h"
+#include "driver_bluetooth.h"
 
 extern TIM_HandleTypeDef htim1;
 
@@ -280,9 +281,9 @@ void SoundTask(void *argument)
   		if (pdPASS == xQueueReceive(g_xQueueMusic, &bdata, portMAX_DELAY))
 		{
 		  b_data = bdata.val;         
-            if (b_data == 0x01) /* ��ͣ/���� */
+            if (b_data == BT_MUSIC_SET) /* ��ͣ/���� */
             {
-				b_data = 0x00;
+				b_data = BT_KEY_REPEAT;
 
 				  if(SoundInsideTask == NULL)
 				  {
@@ -315,9 +316,9 @@ void SoundTask(void *argument)
 						}
 					}
 			}
-            if (b_data == 0x02)  /* ɾ�� */
+            if (b_data == BT_MUSIC_DEL)  /* ɾ */
             {
-				b_data = 0x00;
+				b_data = BT_KEY_REPEAT;
                 if(SoundInsideTask != NULL)
 				  {
 			//        LCD_Clear();

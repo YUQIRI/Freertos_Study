@@ -21,7 +21,7 @@
 #include <usart.h>
 #include "driver_bluetooth.h"
 #include "music.h"
-
+#include <string.h>
 
 /* ���λ�����: ������������ */
 #define BT_BUF_LEN 128
@@ -41,6 +41,9 @@ static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
 /* ������������ */
 static QueueHandle_t g_xQueueBT; 
+
+static QueueHandle_t g_xQueue[10];
+static int g_xQueueCnt = 0;
 
 #define BT_NEXT_POS(x) ((x+1) % BT_BUF_LEN)
 
@@ -75,6 +78,27 @@ static unsigned char GetKeyFromBuf(void)
 	return key;
 }
 
+void RegisterQueueHandle(QueueHandle_t xQueue)
+{
+	if (g_xQueueCnt < 10)
+	{
+		g_xQueue[g_xQueueCnt++] = xQueue;
+	}
+	else if(g_xQueueCnt == 10)
+	{
+		g_xQueueCnt = 0; /* 队列已满, 可以选择删除旧队列或者不再添加新队列 */
+		memset(g_xQueue, 0, sizeof(g_xQueue)); /* 清空队列数组 */
+	}
+}
+
+static void DispathKey(struct bt_data *btdata)
+{
+	int i;
+	for (i = 0; i < g_xQueueCnt; i++)
+	{
+		xQueueSendFromISR(g_xQueue[i], btdata, NULL);
+	}
+}
 /**********************************************************************
  * �������ƣ� BT_UART_RxCpltCallback
  * ���������� USART1�жϷ�����,�������ݽ���
@@ -90,10 +114,11 @@ void BT_UART_RxCpltCallback(uint8_t ch)
     btdata.val = ch;
 	bdata.dev = 0xAA;
     bdata.val = ch;
-	/* �ȴ����������У��ٴ������м�*/
-    xQueueSendToBackFromISR(g_xQueueBT, &btdata, NULL);
-	xQueueSendToBackFromISR(g_xQueueMusic, &bdata, NULL);
 
+	/* �ȴ����������У��ٴ������м�*/
+    //xQueueSendToBackFromISR(g_xQueueBT, &btdata, NULL);
+	xQueueSendToBackFromISR(g_xQueueMusic, &bdata, NULL);
+	DispathKey(&btdata);
 
     /* ����ԭ���Ļ��λ����� */
     PutKeyToBuf(0xAA);

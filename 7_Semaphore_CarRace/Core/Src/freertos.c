@@ -50,6 +50,7 @@
 /* USER CODE BEGIN Includes */
 #include "music.h"
 #include "game1.h"
+#include "game2.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -132,7 +133,7 @@ void MX_FREERTOS_Init(void) {
   LCD_Clear();
   
   BTReceiver_Init();
-  MPU6050_Init();
+  // MPU6050_Init();
   
   LCD_PrintString(0, 0, "Starting");
 
@@ -169,8 +170,9 @@ void MX_FREERTOS_Init(void) {
 
   xTaskCreate(SoundTask, "Sound", 128, NULL, osPriorityNormal , NULL);
   
-  xTaskCreate(game1_task, "GameTask", 128 * 4 , NULL, osPriorityNormal, NULL);
-
+  // xTaskCreate(game1_task, "GameTask", 128 * 4 , NULL, osPriorityNormal, NULL);
+  
+  car_game();
   /* 创建任务: 光 */
   //xLightTaskHandle = xTaskCreateStatic(Led_Test, "LightTask", 128, NULL, osPriorityNormal, g_pucStackOfLightTask, &g_TCBofLightTask);
 
